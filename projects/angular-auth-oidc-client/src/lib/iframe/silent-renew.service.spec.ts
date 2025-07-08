@@ -91,23 +91,21 @@ describe('SilentRenewService  ', () => {
 
   describe('getOrCreateIframe', () => {
     it('returns iframe if iframe is truthy', () => {
-      spyOn(silentRenewService as any, 'getExistingIframe').and.returnValue({
-        name: 'anything',
-      });
+      const config = { configId: 'configId1' };
+      const mockIframe = { name: 'anything' } as HTMLIFrameElement;
+      
+      spyOn(iFrameService, 'getExistingIFrame').and.returnValue(mockIframe);
 
-      const result = silentRenewService.getOrCreateIframe({
-        configId: 'configId1',
-      });
+      const result = silentRenewService.getOrCreateIframe(config);
 
-      expect(result).toEqual({ name: 'anything' } as HTMLIFrameElement);
+      expect(result).toEqual(mockIframe);
+      expect(iFrameService.getExistingIFrame).toHaveBeenCalledOnceWith('myiFrameForSilentRenew_configId1');
     });
 
     it('adds iframe to body if existing iframe is falsy', () => {
       const config = { configId: 'configId1' };
 
-      spyOn(silentRenewService as any, 'getExistingIframe').and.returnValue(
-        null
-      );
+      spyOn(iFrameService, 'getExistingIFrame').and.returnValue(null);
 
       const spy = spyOn(iFrameService, 'addIFrameToWindowBody').and.returnValue(
         { name: 'anything' } as HTMLIFrameElement
@@ -115,7 +113,7 @@ describe('SilentRenewService  ', () => {
 
       expect(result).toEqual({ name: 'anything' } as HTMLIFrameElement);
       expect(spy).toHaveBeenCalledTimes(1);
-      expect(spy).toHaveBeenCalledOnceWith('myiFrameForSilentRenew', config);
+      expect(spy).toHaveBeenCalledOnceWith('myiFrameForSilentRenew_configId1', config);
     });
   });
 
@@ -183,6 +181,7 @@ describe('SilentRenewService  ', () => {
               isAuthenticated: false,
               validationResult: ValidationResult.LoginRequired,
               isRenewProcess: true,
+              configId: 'configId1',
             });
             expect(resetAuthorizationDataSpy).toHaveBeenCalledOnceWith(
               config,
@@ -303,7 +302,8 @@ describe('SilentRenewService  ', () => {
         (result) => {
           expect(result).toEqual({
             refreshToken: 'callbackContext',
-          } as CallbackContext);
+            configId: 'configId1',
+          } as CallbackContext & { configId?: string });
         }
       );
 
@@ -350,7 +350,7 @@ describe('SilentRenewService  ', () => {
 
       silentRenewService.refreshSessionWithIFrameCompleted$.subscribe(
         (result) => {
-          expect(result).toBeNull();
+          expect(result).toEqual({ configId: 'configId1' });
         }
       );
 
